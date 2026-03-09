@@ -34,3 +34,20 @@ The application will consist of the following pages:
 * **Page 3: Price Predictor:** Addresses BR2. It displays the predicted price for the 4 inherited houses and contains an interactive set of widgets for the user to input custom property features and receive a real-time price prediction.
 * **Page 4: Project Hypotheses:** Displays the 3 business hypotheses and the conclusions derived from the EDA.
 * **Page 5: ML Performance Metrics:** A technical page detailing the ML pipeline, feature importance, and model evaluation metrics ($R^2$ and Actual vs. Predicted plots).
+
+## 🐛 Fixed Bugs & Issues
+
+**Issue 1: Feature Order Mismatch (Silent Fail Prevention)**
+* **Bug:** Machine learning models require the exact same feature order during live prediction as they had during training. If the Streamlit dashboard passes user input in a different sequence, the model will output completely incorrect predictions without throwing any visible system errors (a highly dangerous silent fail).
+* **Fix:** During the modeling phase (`05_Modeling.ipynb`), I extracted and serialized the training columns order into a `train_columns.pkl` file. The Streamlit app will load this file and use the `.filter()` command to enforce the correct column sequence on the live data before passing it to the prediction pipeline.
+
+**Issue 2: Notebook Sequential Execution State**
+* **Bug:** During development, I noticed that loading pre-trained models from the disk to save time broke the logical flow for a fresh "Run All" execution. If an evaluator ran the notebook from top to bottom, it would create state conflicts between the freshly trained memory variables and the loaded disk files.
+* **Fix:** Refactored the `05_Modeling.ipynb` architecture to ensure that the newly trained models are passed purely in-memory directly to the comparison step. This guarantees that evaluators can execute the notebook end-to-end seamlessly, establishing a perfect continuous integration flow.
+
+**Issue 3: Incorrect Model Serialization for Production**
+* **Bug:** During the final step of the modeling phase (`05_Modeling.ipynb`), the `RandomForestRegressor` was accidentally serialized (`.pkl`) instead of the winning `LinearRegression` model. This would result in the Streamlit dashboard using a sub-optimal model with a lower $R^2$ score (0.749 instead of 0.878) for live predictions.
+* **Fix:** I identified the mismatch between the documented winning model and the serialized variable. I corrected the output code to explicitly call `joblib.dump()` on the `lin_reg_pipe` variable and renamed the output file to `linear_regression_pipeline.pkl` to prevent deployment errors.
+
+---
+
