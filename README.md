@@ -27,6 +27,12 @@ To address the business requirements, the following three hypotheses were formul
 * **Model Output:** A continuous numerical value representing the predicted property price in USD.
 * **Training Data:** The data was sourced from a public Kaggle dataset (Ames Housing Dataset) containing nearly 1500 house records with various independent variables (features) and the final sale price (target).
 
+### 4.1 Architectural Decision: Feature Selection in ML Pipelines
+During the modeling phase, an architectural experiment was conducted to evaluate the impact of explicit feature selection (`SelectFromModel`) across different algorithms.
+
+* **Random Forest:** Required `SelectFromModel` to act as a strict filter, preventing the ensemble model from overfitting on less relevant variables.
+* **Linear Regression (The Winning Model):** The experiment proved that forcing explicit feature selection on the Linear Regression pipeline actually *degraded* its performance (dropping the $R^2$ score from 0.878 to 0.831). Because rigorous feature selection and scaling were already performed manually during the Exploratory Data Analysis (EDA) phase, the input dataset was already highly optimized. The Linear Regression algorithm achieved its peak performance by utilizing all provided features and relying on its internal mathematical coefficient weighting to naturally discard any remaining noise. Therefore, the simpler, unfiltered pipeline was chosen for the final production deployment.
+
 ## 5. Dashboard Design (Streamlit UI)
 The application will consist of the following pages:
 * **Page 1: Quick Project Summary:** Describes the project dataset, the client's requirements, and general information about the Ames housing market.
