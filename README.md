@@ -27,11 +27,11 @@ To address the business requirements, the following three hypotheses were formul
 * **Model Output:** A continuous numerical value representing the predicted property price in USD.
 * **Training Data:** The data was sourced from a public Kaggle dataset (Ames Housing Dataset) containing nearly 1500 house records with various independent variables (features) and the final sale price (target).
 
-### 4.1 Architectural Decision: Feature Selection in ML Pipelines
-During the modeling phase, an architectural experiment was conducted to evaluate the impact of explicit feature selection (`SelectFromModel`) across different algorithms.
+### 4.1 Architectural Decision: Explicit Feature Selection Impact
+During the modeling phase, an architectural experiment was conducted to evaluate the impact of explicit automated feature selection (`SelectFromModel`) across different algorithms (Linear Regression and Random Forest).
 
-* **Random Forest:** Required `SelectFromModel` to act as a strict filter, preventing the ensemble model from overfitting on less relevant variables.
-* **Linear Regression (The Winning Model):** The experiment proved that forcing explicit feature selection on the Linear Regression pipeline actually *degraded* its performance (dropping the $R^2$ score from 0.878 to 0.831). Because rigorous feature selection and scaling were already performed manually during the Exploratory Data Analysis (EDA) phase, the input dataset was already highly optimized. The Linear Regression algorithm achieved its peak performance by utilizing all provided features and relying on its internal mathematical coefficient weighting to naturally discard any remaining noise. Therefore, the simpler, unfiltered pipeline was chosen for the final production deployment.
+* **The Experiment:** We tested both algorithms with and without `SelectFromModel` acting as a strict filter.
+* **The Conclusion (The Winning Architecture):** The experiment conclusively proved that forcing explicit feature selection actually *degraded* the predictive performance of both the Linear Regression and the Random Forest models. Because rigorous feature selection and scaling were already performed manually during the Exploratory Data Analysis (EDA) phase, the input dataset was already highly optimized. Both algorithms achieved their peak performance (Linear Regression achieving an $R^2$ of 0.878) by utilizing all provided features and relying on their internal mathematical weighting to naturally discard any remaining noise. Therefore, the simpler, unfiltered pipeline was chosen for the final production deployment.
 
 ## 5. Dashboard Design (Streamlit UI)
 The application will consist of the following pages:
@@ -41,7 +41,18 @@ The application will consist of the following pages:
 * **Page 4: Project Hypotheses:** Displays the 3 business hypotheses and the conclusions derived from the EDA.
 * **Page 5: ML Performance Metrics:** A technical page detailing the ML pipeline, feature importance, and model evaluation metrics ($R^2$ and Actual vs. Predicted plots).
 
-## 🐛 Fixed Bugs & Issues
+## 6. Technologies and Libraries Used
+The following tools and libraries were utilized within the virtual environment to develop this project:
+
+* **numpy (1.26.1):** Used for efficient multi-dimensional array operations and mathematical calculations (e.g., calculating logarithmic inversions using `np.expm1`).
+* **pandas (2.1.1):** Essential for data manipulation, aggregation, and DataFrame creation during the Data Cleaning and Feature Engineering phases.
+* **matplotlib (3.8.0) & seaborn (0.13.2):** Used for static data visualization, creating correlation heatmaps, scatter plots, and distribution graphs during EDA.
+* **plotly (5.17.0):** Used to build interactive charts and plots for the Streamlit dashboard.
+* **streamlit (1.40.2):** The core framework used to develop and deploy the interactive web dashboard interface.
+* **kaggle (1.5.16):** Used to securely authenticate and download the Ames Housing dataset directly from the Kaggle API.
+* **scikit-learn (1.3.2):** The primary machine learning library used for building pipelines, feature scaling (`StandardScaler`), model training (`LinearRegression`, `RandomForestRegressor`), hyperparameter optimization (`GridSearchCV`), and calculating performance metrics ($R^2$, MAE).
+
+## 7. 🐛 Fixed Bugs & Issues
 
 **Issue 1: Feature Order Mismatch (Silent Fail Prevention)**
 * **Bug:** Machine learning models require the exact same feature order during live prediction as they had during training. If the Streamlit dashboard passes user input in a different sequence, the model will output completely incorrect predictions without throwing any visible system errors (a highly dangerous silent fail).
@@ -54,6 +65,4 @@ The application will consist of the following pages:
 **Issue 3: Incorrect Model Serialization for Production**
 * **Bug:** During the final step of the modeling phase (`05_Modeling.ipynb`), the `RandomForestRegressor` was accidentally serialized (`.pkl`) instead of the winning `LinearRegression` model. This would result in the Streamlit dashboard using a sub-optimal model with a lower $R^2$ score (0.749 instead of 0.878) for live predictions.
 * **Fix:** I identified the mismatch between the documented winning model and the serialized variable. I corrected the output code to explicitly call `joblib.dump()` on the `lin_reg_pipe` variable and renamed the output file to `linear_regression_pipeline.pkl` to prevent deployment errors.
-
----
 
