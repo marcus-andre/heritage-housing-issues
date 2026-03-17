@@ -1,4 +1,5 @@
-# Create a function named calculator_body()
-# Within it, create 3 columns using the st.columns() function
-# Note, in the video, this column function was still in beta
-    
+import streamlit as st
+
+def page_4_project_hypotheses_body():
+    st.write("### 🧠 Project Hypotheses")
+    st.info("Coming soon: Detailed analysis and validation of project hypotheses.")
