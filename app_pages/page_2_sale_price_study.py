@@ -5,6 +5,11 @@ import seaborn as sns
 from src.data_management import load_house_data
 
 def page_2_sale_price_study_body():
+    """
+    Renders the House Sale Price Study page.
+    Addresses Business Requirement 1 by visualizing correlations
+    between property features and the target variable (SalePrice).
+    """
     
     # Load the house records data
     df = load_house_data()
@@ -21,20 +26,18 @@ def page_2_sale_price_study_body():
         f"Therefore, the client expects data visualizations of the correlated variables against the sale price."
     )
 
-    # 1. Checkbox to inspect the raw house records
-    if st.checkbox("Inspect House Records Data"):
-        st.write(f"* The dataset has {df.shape[0]} rows and {df.shape[1]} columns.")
+    # 1. Expander to inspect the house records and data dictionary
+    with st.expander("🔎 Inspect House Records Data & Data Dictionary"):
+        st.write(f"* The dataset has **{df.shape[0]} rows** and **{df.shape[1]} columns**.")
+        st.write("---")
+        st.write("#### Data Dictionary (Feature Meanings)")
 
-        # Nested Checkbox for the Data Dictionary
-        if st.checkbox("Show Data Dictionary and Sample Records"):
-            st.write("---")
-            st.write("**Data Dictionary (What do these columns mean?)**")
             
-            # Split dictionary into two columns for better layout
-            col1, col2 = st.columns(2)
+        # Split dictionary into two columns for better layout
+        col1, col2 = st.columns(2)
             
-            with col1:
-                st.markdown("""
+        with col1:
+            st.markdown("""
                 * **1stFlrSF**: First Floor square feet.
                 * **2ndFlrSF**: Second Floor square feet.
                 * **BedroomAbvGr**: Bedrooms above grade.
@@ -48,8 +51,8 @@ def page_2_sale_price_study_body():
                 * **HouseAge**: Age of the house (Replaced YearBuilt).
                 """)
                 
-            with col2:
-                st.markdown("""
+        with col2:
+            st.markdown("""
                 * **GrLivArea**: Above grade living area.
                 * **KitchenQual**: Kitchen quality.
                 * **LotArea**: Lot size.
@@ -63,52 +66,53 @@ def page_2_sale_price_study_body():
                 * **SalePrice**: Final sale price (Target).
                 """)
             
-            st.write("---")
-            st.write("### Dataset Sample")
-            st.dataframe(df.head(10))
+        st.write("---")
+        st.write("#### Dataset Sample")
+        st.dataframe(df.head(10))
 
-            # Caption for the table
-            st.caption(
-                f"**Table 1: Ames Housing Data Sample.**\n"
-                f"Displays the first 10 records of the pre-processed dataset. "
-                f"Each row represents a distinct property, and the columns contain the respective features evaluated, "
-                f"including the target variable (SalePrice)."
-            )
+        # Caption for the table
+        st.caption(
+            f"**Table 1: Ames Housing Data Sample.**\n"
+            f"Displays the first 10 records of the pre-processed dataset. "
+            f"Each row represents a distinct property, and the columns contain the respective features evaluated, "
+            f"including the target variable (SalePrice)."
+        )
 
     st.write("---")
 
-    # 2. Checkbox for the Correlation Study (Bar Plot)
-    if st.checkbox("Correlation Study"):
-        st.write("### Analysis of Variable Correlation")
+    # 2. Expander for the Correlation Study (Bar Plot)
+    with st.expander("📈 Correlation Study & Insights"):
+        st.write("#### Analysis of Variable Correlation")
         st.write(
             f"The following variables were found to have the strongest impact on Sale Price: \n"
             f"**{vars_to_study}**"
         )
         
-        if st.checkbox("Plot Correlation vs Sale Price"):
-            # Calculate Spearman correlation against SalePrice, sort descending
-            corr_spearman = df.corr(method='spearman', numeric_only=True)['SalePrice'].sort_values(ascending=False)
-            
-            # Drop SalePrice itself from the list (correlation of 1.0) and get top 10
-            corr_spearman = corr_spearman.drop('SalePrice').head(10)
+        # Calculate Spearman correlation against SalePrice, sort descending
+        corr_spearman = df.corr(method='spearman', numeric_only=True)['SalePrice'].sort_values(ascending=False)
+        
+        # Drop SalePrice itself from the list (correlation of 1.0) and get top 10
+        corr_spearman = corr_spearman.drop('SalePrice').head(10)
 
-            # Replicate the bar plot from the EDA Jupyter Notebook
-            fig, ax = plt.subplots(figsize=(8, 6))
-            sns.barplot(x=corr_spearman.values, y=corr_spearman.index, ax=ax, color='#1f77b4')
-            ax.set_title("Key Numerical Value Drivers: Spearman Correlation vs SalePrice")
-            ax.set_xlabel("Spearman Correlation Coefficient")
-            st.pyplot(fig)
-            plt.close(fig) # Prevent memory leak
-            
-            st.info(
-                f"**Insights:**\n"
-                f"* The bar plot clearly shows which features have the strongest positive correlation with the final price.\n"
-                f"* Variables like **OverallQual** and **GrLivArea** dominate the top of the chart, confirming their importance."
-            )
+        # Replicate the bar plot from the EDA Jupyter Notebook
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sns.barplot(x=corr_spearman.values, y=corr_spearman.index, ax=ax, color='#1f77b4')
+        ax.set_title("Key Numerical Value Drivers: Spearman Correlation vs SalePrice")
+        ax.set_xlabel("Spearman Correlation Coefficient")
+        st.pyplot(fig)
+        plt.close(fig) # Prevent memory leak
+        
+        st.info(
+            f"**Insights:**\n"
+            f"* The bar plot clearly shows which features have the strongest positive correlation with the final price.\n"
+            f"* Variables like **OverallQual** and **GrLivArea** dominate the top of the chart, confirming their importance."
+        )
+
+    st.write("---")
 
     # 3. EDA Section (Visualizing the findings)
-    if st.checkbox("Exploratory Data Analysis (EDA)"):
-        st.write("### Visualizing Relationship: Feature vs Sale Price")
+    with st.expander("🖼️ Exploratory Data Analysis (EDA) Visualizations"):
+        st.write("#### Visualizing Relationship: Feature vs Sale Price")
         st.write("The plots below illustrate how the most important features relate to the final property value.")
         
         target_var = 'SalePrice'
