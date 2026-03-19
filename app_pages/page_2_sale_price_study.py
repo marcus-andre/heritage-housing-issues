@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
 from src.data_management import load_house_data
 
 def page_2_sale_price_study_body():
@@ -68,15 +69,17 @@ def page_2_sale_price_study_body():
             
         st.write("---")
         st.write("#### Dataset Sample")
-        st.dataframe(df.head(10))
+        
+        if st.checkbox("Show raw dataset"):
+            st.dataframe(df.head(10))
 
-        # Caption for the table
-        st.caption(
-            f"**Table 1: Ames Housing Data Sample.**\n"
-            f"Displays the first 10 records of the pre-processed dataset. "
-            f"Each row represents a distinct property, and the columns contain the respective features evaluated, "
-            f"including the target variable (SalePrice)."
-        )
+            # Caption for the table
+            st.caption(
+                f"**Table 1: Ames Housing Data Sample.**\n"
+                f"Displays the first 10 records of the pre-processed dataset. "
+                f"Each row represents a distinct property, and the columns contain the respective features evaluated, "
+                f"including the target variable (SalePrice)."
+            )
 
     st.write("---")
 
@@ -107,6 +110,21 @@ def page_2_sale_price_study_body():
             f"* The bar plot clearly shows which features have the strongest positive correlation with the final price.\n"
             f"* Variables like **OverallQual** and **GrLivArea** dominate the top of the chart, confirming their importance."
         )
+        
+        st.write("---")
+        st.write("#### Correlation Heatmaps")
+        
+        # Calculate Pearson and Spearman correlations for the studied variables
+        corr_pearson = df[vars_to_study + ['SalePrice']].corr(method='pearson')
+        corr_spearman_matrix = df[vars_to_study + ['SalePrice']].corr(method='spearman')
+        
+        fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+        sns.heatmap(corr_pearson, annot=True, cmap='coolwarm', ax=axes[0], vmin=-1, vmax=1)
+        axes[0].set_title("Pearson Correlation")
+        sns.heatmap(corr_spearman_matrix, annot=True, cmap='coolwarm', ax=axes[1], vmin=-1, vmax=1)
+        axes[1].set_title("Spearman Correlation")
+        st.pyplot(fig)
+        plt.close(fig) # Prevent memory leak
 
     st.write("---")
 
@@ -117,12 +135,21 @@ def page_2_sale_price_study_body():
         
         target_var = 'SalePrice'
         
+        st.write("#### Target Variable Distribution")
+        fig_hist = px.histogram(df, x=target_var, title=f"Distribution of {target_var}", nbins=50)
+        st.plotly_chart(fig_hist)
+        st.write("---")
+        
         # Plotting each variable against the target
         for col in vars_to_study:
-            fig, ax = plt.subplots(figsize=(8, 5))
-            sns.scatterplot(data=df, x=col, y=target_var, alpha=0.5, ax=ax)
-            ax.set_title(f"{col} vs {target_var}")
-            st.pyplot(fig)
+            if col == 'OverallQual':
+                # Box plot for categorical/ordinal feature to align strictly with Hypothesis 2 from README
+                fig = px.box(df, x=col, y=target_var, title=f"{col} vs {target_var} (Box Plot)", color=col)
+                st.plotly_chart(fig)
+            else:
+                # Using Plotly for interactive scatter plots
+                fig = px.scatter(df, x=col, y=target_var, title=f"{col} vs {target_var}", opacity=0.6)
+                st.plotly_chart(fig)
             
             # Caption for each plot
             if col in ['GarageArea', 'TotalBsmtSF']:
@@ -150,7 +177,6 @@ def page_2_sale_price_study_body():
                 )
                 
             st.write("---")
-            plt.close(fig) # For Streamlit performance
             
         st.success(
             f"**Key Findings Summary:**\n"

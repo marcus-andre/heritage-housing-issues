@@ -52,6 +52,11 @@ The following tools and libraries were utilized within the virtual environment t
 * **kaggle (1.5.16):** Used to securely authenticate and download the Ames Housing dataset directly from the Kaggle API.
 * **scikit-learn (1.3.2):** The primary machine learning library used for building pipelines, feature scaling (`StandardScaler`), model training (`LinearRegression`, `RandomForestRegressor`), hyperparameter optimization (`GridSearchCV`), and calculating performance metrics ($R^2$, MAE).
 
+### 6.1 Architectural Decision: Static vs Interactive Visualizations
+A deliberate architectural decision was made to mix static (`matplotlib`/`seaborn`) and dynamic (`plotly`) plotting libraries within the Streamlit dashboard to balance visual clarity, user engagement, and server performance:
+* **Plotly (Dynamic/Interactive):** Used for Scatter Plots, Histograms, and Box Plots on the Sale Price Study page. Plotly provides an interactive HTML/JS frontend, allowing the user to hover over specific data points, pan, and zoom. This strictly satisfies the requirement for "interactive visualisations" to maximize user engagement, while safely offloading graphic memory management to the client's web browser.
+* **Matplotlib & Seaborn (Static):** Used for complex statistical visualizations like the Correlation Heatmaps and Bar Plots. While Seaborn excels at rendering detailed statistical matrices, Matplotlib inherently retains figure objects in the Python global state. This creates a known risk of server memory leaks when rendering repeatedly in a Streamlit environment. To mitigate this and ensure system stability, explicit resource cleanup (`plt.close(fig)`) was rigorously implemented immediately after rendering every static plot.
+
 ## 7. 🐛 Fixed Bugs & Issues
 
 **Issue 1: Feature Order Mismatch (Silent Fail Prevention)**
@@ -66,9 +71,9 @@ The following tools and libraries were utilized within the virtual environment t
 * **Bug:** During the final step of the modeling phase (`05_Modeling.ipynb`), the `RandomForestRegressor` was accidentally serialized (`.pkl`) instead of the winning `LinearRegression` model. This would result in the Streamlit dashboard using a sub-optimal model with a lower $R^2$ score (0.749 instead of 0.878) for live predictions.
 * **Fix:** I identified the mismatch between the documented winning model and the serialized variable. I corrected the output code to explicitly call `joblib.dump()` on the `lin_reg_pipe` variable and renamed the output file to `linear_regression_pipeline.pkl` to prevent deployment errors.
 
-**Issue 4: Matplotlib Memory Leak in Dashboard Loops**
-* **Bug:** While rendering multiple scatter plots within a `for` loop on the Sale Price Study page, the application triggered a `PyplotGlobalUseWarning`. This happened because Matplotlib was keeping all figure objects in the global state, leading to excessive memory consumption and eventual server instability.
-* **Fix:** I implemented `plt.close(fig)` immediately after the `st.pyplot(fig)` call within the plotting loop.
+**Issue 4: Matplotlib Memory Leak in Dashboard**
+* **Bug:** While rendering Matplotlib and Seaborn plots (such as the Correlation Bar Plot and Heatmaps) on the Sale Price Study page, the application is prone to trigger a `PyplotGlobalUseWarning`. This happens because Matplotlib keeps figure objects in the global state, leading to excessive memory consumption and eventual server instability upon multiple user interactions.
+* **Fix:** I implemented `plt.close(fig)` immediately after every `st.pyplot(fig)` call.
 * **Reasoning:** Unlike a standard Jupyter Notebook where plots are cleared after display, a Streamlit web server requires explicit resource cleanup. Closing the figure object manually ensures that memory is released back to the system after each plot is rendered, preventing leaks and maintaining high performance during user interaction.
 
 **Issue 5: Scikit-Learn Feature Order Mismatch on Custom Prediction**
