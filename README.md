@@ -57,6 +57,11 @@ A deliberate architectural decision was made to mix static (`matplotlib`/`seabor
 * **Plotly (Dynamic/Interactive):** Used for Scatter Plots, Histograms, and Box Plots on the Sale Price Study page. Plotly provides an interactive HTML/JS frontend, allowing the user to hover over specific data points, pan, and zoom. This strictly satisfies the requirement for "interactive visualisations" to maximize user engagement, while safely offloading graphic memory management to the client's web browser.
 * **Matplotlib & Seaborn (Static):** Used for complex statistical visualizations like the Correlation Heatmaps and Bar Plots. While Seaborn excels at rendering detailed statistical matrices, Matplotlib inherently retains figure objects in the Python global state. This creates a known risk of server memory leaks when rendering repeatedly in a Streamlit environment. To mitigate this and ensure system stability, explicit resource cleanup (`plt.close(fig)`) was rigorously implemented immediately after rendering every static plot.
 
+### 6.2 Architectural Decision: Pre-rendered ML Performance Plots
+During the transition from the Jupyter Notebook environment to the live Streamlit production dashboard, a deliberate MLOps decision was made to export the model's performance plots (Feature Importance and Regression Evaluation scatter plots) as static images (`.png`) rather than rendering them dynamically on the fly.
+* **Performance & Server Memory Optimization:** Rendering complex scatter plots with thousands of data points dynamically would require the Streamlit server to load the entire dataset, perform train/test splits, reverse logarithmic transformations, and run predictions upon every page load. This consumes significant RAM and processing power, creating a high risk of application crashes (Out of Memory errors) in lightweight or free-tier deployment environments.
+* **Reproducibility & Consistency:** By saving the visual artifacts at the exact moment of model training in the notebook, we guarantee that the dashboard displays a consistent, immutable snapshot of the model's approved performance. This follows industry MLOps best practices by strictly separating the **Research/Training** environment from the **Production/Deployment** environment.
+
 ## 7. 🐛 Fixed Bugs & Issues
 
 **Issue 1: Feature Order Mismatch (Silent Fail Prevention)**
