@@ -120,7 +120,7 @@ The project was deployed to Heroku using the following steps:
 4. Before deploying, ensure the following core configuration files are present in the repository root:
    * `setup.sh`: Contains the Streamlit server configuration requirements.
    * `Procfile`: Tells Heroku how to run the application (`web: sh setup.sh && streamlit run app.py`).
-   * `runtime.txt`: Explicitly sets the Python environment (e.g., `python-3.8.18`), which significantly reduces environment conflicts between development and production.
+   * `runtime.txt`: Explicitly sets the Python environment (e.g., `python-3.10.14`), which significantly reduces environment conflicts between development and production.
    * `requirements.txt`: Contains all the external packages and dependencies required to run the application.
    * `.slugignore`: Used to ignore large or sensitive files/folders (like the `jupyter_notebooks/` directory) that the application doesn't need once deployed, maintaining a lightweight server.
 5. Scroll to the bottom of the deploy page, select the `main` branch, and click **Deploy Branch**.
