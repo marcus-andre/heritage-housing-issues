@@ -1,5 +1,9 @@
 # Heritage Housing Issues - Predictive Analytics
 
+## Dataset Content
+* The dataset is sourced from **Kaggle**. We created a fictitious user story where predictive analytics can be applied in a real-world workplace scenario.
+* The dataset contains nearly 1500 rows and represents housing records from Ames, Iowa. It includes various property features (such as Floor Area, Basement, Garage, Kitchen, Lot, Porch, Wood Deck, Year Built) and their respective sale prices for houses built between 1872 and 2010.
+
 ## 1. Business Requirements
 As a Data Analyst for Code Institute Consulting, I was requested by a client to provide actionable insights into the housing market of Ames, Iowa. The client has inherited four properties and requires a data-driven approach to maximize her inheritance value.
 
@@ -33,13 +37,19 @@ During the modeling phase, an architectural experiment was conducted to evaluate
 * **The Experiment:** We tested both algorithms with and without `SelectFromModel` acting as a strict filter.
 * **The Conclusion (The Winning Architecture):** The experiment conclusively proved that forcing explicit feature selection actually *degraded* the predictive performance of both the Linear Regression and the Random Forest models. Because rigorous feature selection and scaling were already performed manually during the Exploratory Data Analysis (EDA) phase, the input dataset was already highly optimized. Both algorithms achieved their peak performance (Linear Regression achieving an $R^2$ of 0.878) by utilizing all provided features and relying on their internal mathematical weighting to naturally discard any remaining noise. Therefore, the simpler, unfiltered pipeline was chosen for the final production deployment.
 
-## 5. Dashboard Design (Streamlit UI)
-The application will consist of the following pages:
+## 5. Dashboard Design (Streamlit App UI)
+Following the core dashboard design principles, the application was crafted to ensure each page has a clear **Use Case** and **Course of Action**, explicitly answering the business requirements. To guarantee a professional User Experience (UX), the dashboard is logically split to accommodate two distinct types of users: **non-technical** (business stakeholders) and **technical** (data practitioners).
+
+### Non-Technical Pages (Business Stakeholders)
+The first four pages are tailored for the client and business executives to easily navigate the project's insights and utilize the predictive tools:
 * **Page 1: Quick Project Summary:** Describes the project dataset, the client's requirements, and general information about the Ames housing market.
 * **Page 2: House Sale Price Study:** Addresses BR1. It contains dynamic data visualizations (histograms, scatter plots, correlation heatmaps) and a checkbox to display the raw data.
 * **Page 3: Price Predictor:** Addresses BR2. It displays the predicted price for the 4 inherited houses and contains an interactive set of widgets for the user to input custom property features and receive a real-time price prediction.
-* **Page 4: Project Hypotheses:** Displays the 3 business hypotheses and the conclusions derived from the EDA.
-* **Page 5: ML Performance Metrics:** A technical page detailing the ML pipeline, feature importance, and model evaluation metrics ($R^2$ and Actual vs. Predicted plots).
+* **Page 4: Project Hypotheses:** Displays the 3 business hypotheses, how we validated them, and the conclusions derived from the EDA.
+
+### Technical Pages (Data Practitioners)
+The final page is tailored for data practitioners who are interested in learning about the model's architecture and performance:
+* **Page 5: ML Performance Metrics:** A technical page detailing the ML pipeline, feature importance, and model evaluation metrics ($R^2$ and Actual vs. Predicted plots) related to the Regression task.
 
 ## 6. Technologies and Libraries Used
 The following tools and libraries were utilized within the virtual environment to develop this project:
@@ -104,13 +114,18 @@ This project was developed following the **CRISP-DM** (Cross-Industry Standard P
 ### Heroku Deployment
 The project was deployed to Heroku using the following steps:
 
-1. Log in to Heroku and create a new App.
-2. Navigate to the **Deploy** tab and select **GitHub** as the deployment method.
+1. Log in to your Heroku account and create a new App.
+2. Navigate to the **Deploy** tab, select **GitHub** as the deployment method, and connect your authorization.
 3. Search for the project repository (`heritage-housing-issues`) and click **Connect**.
-4. Ensure that the `requirements.txt`, `setup.sh`, and `Procfile` are present in the GitHub repository root.
-5. Ensure that the `runtime.txt` contains a Python version supported by the Heroku stack (e.g., `python-3.8.18`).
-6. At the bottom of the deploy page, select the `main` branch and click **Deploy Branch**.
-7. Once the build process completes, click **Open App** to view the live dashboard.
+4. Before deploying, ensure the following core configuration files are present in the repository root:
+   * `setup.sh`: Contains the Streamlit server configuration requirements.
+   * `Procfile`: Tells Heroku how to run the application (`web: sh setup.sh && streamlit run app.py`).
+   * `runtime.txt`: Explicitly sets the Python environment (e.g., `python-3.8.18`), which significantly reduces environment conflicts between development and production.
+   * `requirements.txt`: Contains all the external packages and dependencies required to run the application.
+   * `.slugignore`: Used to ignore large or sensitive files/folders (like the `jupyter_notebooks/` directory) that the application doesn't need once deployed, maintaining a lightweight server.
+5. Scroll to the bottom of the deploy page, select the `main` branch, and click **Deploy Branch**.
+6. Keep an eye on the build log to ensure there are no errors.
+7. Once the build process runs smoothly and completes, click **Open App** to view the live dashboard.
 
 **Live App Link:** [INSERIR O LINK DO SEU APP AQUI]
 
