@@ -6,12 +6,12 @@ kaggle.json
 
 # Ignore all files in inputs, except the specific dataset needed for the dashboard
 inputs/*
-!inputs/datasets/raw/inherited_houses.csv
+!inputs/datasets/raw/house-price/
 
 # Ignore all files in outputs, except for processed datasets and trained models
 outputs/*
 !outputs/datasets/
-!outputs/models/
+!outputs/ml_pipeline/
 
 __pycache__/
 *.py[cod]
