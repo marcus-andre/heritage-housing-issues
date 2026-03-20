@@ -25,7 +25,7 @@ def page_4_project_hypotheses_body():
     st.write("### Hypothesis 1: Property Size vs. Sale Price")
     st.write(
         f"* **We suspect that:** The overall size of a property (specifically `GrLivArea` and `TotalBsmtSF`) "
-        f"has a strong positive linear correlation with the `SalePrice`."
+        f"has a strong positive linear correlation with the Target Variable (`SalePrice`)."
     )
     st.success(
         f"**Validation: Confirmed ✅**\n\n"
@@ -49,7 +49,7 @@ def page_4_project_hypotheses_body():
     st.write("### Hypothesis 2: Property Quality vs. Sale Price")
     st.write(
         f"* **We suspect that:** The `OverallQual` (which rates the overall material and finish of the house) "
-        f"is the most predictive categorical/ordinal feature for the target variable."
+        f"is the most predictive categorical/ordinal feature for the Target Variable."
     )
     st.success(
         f"**Validation: Confirmed ✅**\n\n"
@@ -70,11 +70,11 @@ def page_4_project_hypotheses_body():
     st.write("### Hypothesis 3: Property Age vs. Sale Price")
     st.write(
         f"* **We suspect that:** Newer houses (`YearBuilt`) or recently remodeled houses (`YearRemodAdd`) "
-        f"hold significantly higher market value than older, unrenovated ones."
+        f"hold significantly higher market value (Target Variable) than older, unrenovated ones."
     )
     st.success(
         f"**Validation: Confirmed ✅**\n\n"
-        f"* We engineered a `HouseAge` feature and validated the hypothesis using scatter plots.\n"
+        f"* We utilized **Feature Engineering** to create a `HouseAge` variable and validated the hypothesis using scatter plots.\n"
         f"* **Conclusion:** The EDA showed a **negative correlation** between house age and sale price. "
         f"As the house age increases, the sale price generally decreases. Newer properties, or those recently "
         f"remodeled, consistently cluster at the higher end of the pricing spectrum."

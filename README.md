@@ -18,7 +18,7 @@ To address the business requirements, the following three hypotheses were formul
 
 ## 3. The Rationale to Map Business Requirements to ML Tasks
 * **BR1 (Data Visualization):** We will implement a correlation study (Pearson and Spearman) to identify the most relevant variables. We will build an interactive dashboard page displaying at least 4 different types of plots (e.g., scatter, box, heatmap, bar) to represent these data stories visually.
-* **BR2 (Predictive Modeling):** We will develop a Supervised Machine Learning model. Specifically, a Regression task to predict a continuous target (`SalePrice`). We will perform extensive Hyperparameter Optimization to ensure maximum predictive accuracy.
+* **BR2 (Predictive Modeling):** We will develop a Supervised Machine Learning model. Specifically, a Regression task to predict a continuous target (`SalePrice`). We will perform extensive Hyperparameter Optimization using `GridSearchCV`—testing a robust grid of multiple hyperparameters (e.g., at least 6 different parameters with 3 distinct values each for the baseline model algorithms)—to ensure maximum predictive accuracy.
 
 ## 4. ML Business Case
 * **Problem Definition:** We want an ML model to predict the `SalePrice` of houses in Ames, Iowa. It is a Supervised, uni-dimensional Regression model.
@@ -62,6 +62,11 @@ During the transition from the Jupyter Notebook environment to the live Streamli
 * **Performance & Server Memory Optimization:** Rendering complex scatter plots with thousands of data points dynamically would require the Streamlit server to load the entire dataset, perform train/test splits, reverse logarithmic transformations, and run predictions upon every page load. This consumes significant RAM and processing power, creating a high risk of application crashes (Out of Memory errors) in lightweight or free-tier deployment environments.
 * **Reproducibility & Consistency:** By saving the visual artifacts at the exact moment of model training in the notebook, we guarantee that the dashboard displays a consistent, immutable snapshot of the model's approved performance. This follows industry MLOps best practices by strictly separating the **Research/Training** environment from the **Production/Deployment** environment.
 
+### 6.3 Architectural Decision: Streamlit Data and Asset Caching
+Streamlit's execution model runs the entire script from top to bottom upon every user interaction (e.g., clicking a button or changing a widget). 
+* **The Risk:** Reading large CSV datasets and heavy serialized Machine Learning objects (`.pkl` pipelines and scalers) from the disk on every interaction would cause severe UI lag and excessive memory consumption, leading to potential server crashes.
+* **The Solution:** We explicitly implemented Streamlit's caching decorators within the `src/data_management.py` module. We applied `@st.cache_data` to functions loading Pandas DataFrames and `@st.cache_resource` to functions loading non-mutating global ML models via `joblib`. This ensures these assets are loaded from the disk into RAM exactly once. Subsequent user interactions retrieve the data instantly from memory, achieving a highly responsive and stable production dashboard.
+
 ## 7. 🐛 Fixed Bugs & Issues
 
 **Issue 1: Feature Order Mismatch (Silent Fail Prevention)**
@@ -84,3 +89,51 @@ During the transition from the Jupyter Notebook environment to the live Streamli
 **Issue 5: Scikit-Learn Feature Order Mismatch on Custom Prediction**
 * **Bug:** When testing the "Predict Custom Property Price" tool, the ML pipeline crashed with a `ValueError` stating that the feature names must be in the exact same order as they were during the model's `fit()` phase. The dictionary creating the live Pandas DataFrame had slightly disordered keys, and Pandas' `.filter()` method does not reorder columns, it only drops unselected ones.
 * **Fix:** I reorganized the dictionary keys within the `DrawInputsWidgets()` function to strictly reflect the exact column sequence of the original dataset. Furthermore, to make the pipeline bulletproof, I replaced the `.filter(price_features)` call with explicit list indexing `df[price_features]`, which guarantees that the DataFrame columns are forcefully reordered to match the trained pipeline's expectations before prediction.
+
+## 8. Development Workflow (CRISP-DM)
+This project was developed following the **CRISP-DM** (Cross-Industry Standard Process for Data Mining) methodology:
+1. **Business Understanding:** Defining the client's needs (BR1 and BR2).
+2. **Data Understanding:** Performing initial EDA to discover patterns and formulate hypotheses.
+3. **Data Preparation:** Cleaning missing values, engineering new features (e.g., `HouseAge`), and encoding categorical variables.
+4. **Modeling:** Training various algorithms (Decision Trees, Random Forests, Linear Regression) and hyperparameter tuning.
+5. **Evaluation:** Assessing models against the success metric ($R^2 \ge 0.75$) and selecting the best performer.
+6. **Deployment:** Building an interactive Streamlit dashboard and deploying it via Heroku.
+
+## 9. Deployment
+
+### Heroku Deployment
+The project was deployed to Heroku using the following steps:
+
+1. Log in to Heroku and create a new App.
+2. Navigate to the **Deploy** tab and select **GitHub** as the deployment method.
+3. Search for the project repository (`heritage-housing-issues`) and click **Connect**.
+4. Ensure that the `requirements.txt`, `setup.sh`, and `Procfile` are present in the GitHub repository root.
+5. Ensure that the `runtime.txt` contains a Python version supported by the Heroku stack (e.g., `python-3.8.18`).
+6. At the bottom of the deploy page, select the `main` branch and click **Deploy Branch**.
+7. Once the build process completes, click **Open App** to view the live dashboard.
+
+**Live App Link:** [INSERIR O LINK DO SEU APP AQUI]
+
+### Forking the GitHub Repository
+To experiment with the code without affecting the main branch:
+1. Log in to GitHub and locate the repository.
+2. At the top right of the Repository page, click the **Fork** button.
+3. A copy of the original repository will be created in your GitHub account.
+
+### Local Clone
+To clone the repository to your local machine:
+1. Under the repository name on GitHub, click the **Code** button.
+2. Choose your preferred cloning method (HTTPS, SSH, or GitHub CLI) and copy the provided URL.
+3. Open your terminal or command prompt.
+4. Change the current working directory to the location where you want the cloned directory to be made.
+5. Type `git clone`, followed by the URL you copied in Step 2.
+   ```bash
+   git clone https://github.com/marcus-andre/heritage-housing-issues.git
+   ```
+6. Press Enter. Your local clone will be created.
+7. Install the required dependencies using: `pip install -r requirements.txt`.
+
+## 10. Credits
+* The Ames Housing dataset was sourced from Kaggle.
+* The project template and Streamlit multipage architecture were provided by Code Institute.
+* Guidance on mitigating Streamlit memory leaks with Matplotlib was sourced from standard Python/Streamlit community best practices.

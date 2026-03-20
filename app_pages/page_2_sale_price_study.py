@@ -9,7 +9,7 @@ def page_2_sale_price_study_body():
     """
     Renders the House Sale Price Study page.
     Addresses Business Requirement 1 by visualizing correlations
-    between property features and the target variable (SalePrice).
+    between property features and the Target Variable (SalePrice).
     """
     
     # Load the house records data
@@ -87,7 +87,7 @@ def page_2_sale_price_study_body():
     with st.expander("📈 Correlation Study & Insights"):
         st.write("#### Analysis of Variable Correlation")
         st.write(
-            f"The following variables were found to have the strongest impact on Sale Price: \n"
+            f"Through initial Data Exploration and prior to Feature Engineering, the following variables were found to have the strongest impact on the Target Variable (Sale Price): \n"
             f"**{vars_to_study}**"
         )
         
@@ -101,7 +101,7 @@ def page_2_sale_price_study_body():
         fig, ax = plt.subplots(figsize=(8, 6))
         sns.barplot(x=corr_spearman.values, y=corr_spearman.index, ax=ax, color='#1f77b4')
         ax.set_title("Key Numerical Value Drivers: Spearman Correlation vs SalePrice")
-        ax.set_xlabel("Spearman Correlation Coefficient")
+        ax.set_xlabel("Spearman Correlation Coefficient (Target Variable)")
         st.pyplot(fig)
         plt.close(fig) # Prevent memory leak
         

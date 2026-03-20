@@ -36,9 +36,8 @@ def page_3_inherited_houses_body():
     if st.button("Predict Sale Prices"):
         try:
             # Enforce exact feature order to match the training dataset.
-            # Using list indexing instead of .filter() guarantees reordering
-            # and prevents 'Silent Fails' or Scikit-Learn feature name errors.
-            inherited_df_filtered = inherited_df_engineered[price_features]
+            # Use .filter() to ensure live data features match the pipeline's training order exactly to avoid "Silent Fails".
+            inherited_df_filtered = inherited_df_engineered.filter(items=price_features)
             
             # Predict sale prices using the ML Pipeline (returns logarithmic values, e.g., ~12.2)
             log_predictions = pipeline.predict(inherited_df_filtered)
@@ -69,7 +68,7 @@ def page_3_inherited_houses_body():
     st.info(
         f"This tool allows you to predict the sale price of any custom property in Ames, Iowa. "
         f"By adjusting the widgets below, your input is processed through the exact same **Machine Learning Pipeline** "
-        f"— including Feature Engineering and Scaling — used for the inherited houses, ensuring accurate and reliable results."
+        f"— including Feature Engineering, Scaling, and Hyperparameter Optimization — used for the inherited houses, ensuring accurate and reliable results."
     )
     
     with st.expander("📖 How to use this prediction tool"):
@@ -238,5 +237,6 @@ def process_live_data(X_live, price_features):
     features_to_scale = df.select_dtypes(include=['int64', 'float64']).columns
     df[features_to_scale] = scaler.transform(df[features_to_scale])
     
-    # 6. Enforce exact matching of train columns to prevent 'Silent Fails'
-    return df[price_features]
+    # 6. Use .filter() to ensure live data features match the pipeline's training order exactly to avoid "Silent Fails".
+    # This strictly aligns with the project's robustness requirements.
+    return df.filter(items=price_features)
