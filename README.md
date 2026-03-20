@@ -18,7 +18,7 @@ To address the business requirements, the following three hypotheses were formul
 
 ## 3. The Rationale to Map Business Requirements to ML Tasks
 * **BR1 (Data Visualization):** We will implement a correlation study (Pearson and Spearman) to identify the most relevant variables. We will build an interactive dashboard page displaying at least 4 different types of plots (e.g., scatter, box, heatmap, bar) to represent these data stories visually.
-* **BR2 (Predictive Modeling):** We will develop a Supervised Machine Learning model. Specifically, a Regression task to predict a continuous target (`SalePrice`). We will perform extensive Hyperparameter Optimization to ensure maximum predictive accuracy.
+* **BR2 (Predictive Modeling):** We will develop a Supervised Machine Learning model. Specifically, a Regression task to predict a continuous target (`SalePrice`). We will perform extensive Hyperparameter Optimization using `GridSearchCV`—testing a robust grid of multiple hyperparameters (e.g., at least 6 different parameters with 3 distinct values each for the baseline model algorithms)—to ensure maximum predictive accuracy.
 
 ## 4. ML Business Case
 * **Problem Definition:** We want an ML model to predict the `SalePrice` of houses in Ames, Iowa. It is a Supervised, uni-dimensional Regression model.
@@ -46,11 +46,26 @@ The following tools and libraries were utilized within the virtual environment t
 
 * **numpy (1.26.1):** Used for efficient multi-dimensional array operations and mathematical calculations (e.g., calculating logarithmic inversions using `np.expm1`).
 * **pandas (2.1.1):** Essential for data manipulation, aggregation, and DataFrame creation during the Data Cleaning and Feature Engineering phases.
-* **matplotlib (3.8.0) & seaborn (0.13.2):** Used for static data visualization, creating correlation heatmaps, scatter plots, and distribution graphs during EDA.
+* **matplotlib (3.8.0) & seaborn (0.13.2):** Used for static data visualization, creating correlation heatmaps, scatter plots, and distribution graphs during EDA. In the Streamlit dashboard, explicit figure closure was implemented to ensure optimal server memory management.
 * **plotly (5.17.0):** Used to build interactive charts and plots for the Streamlit dashboard.
 * **streamlit (1.40.2):** The core framework used to develop and deploy the interactive web dashboard interface.
 * **kaggle (1.5.16):** Used to securely authenticate and download the Ames Housing dataset directly from the Kaggle API.
 * **scikit-learn (1.3.2):** The primary machine learning library used for building pipelines, feature scaling (`StandardScaler`), model training (`LinearRegression`, `RandomForestRegressor`), hyperparameter optimization (`GridSearchCV`), and calculating performance metrics ($R^2$, MAE).
+
+### 6.1 Architectural Decision: Static vs Interactive Visualizations
+A deliberate architectural decision was made to mix static (`matplotlib`/`seaborn`) and dynamic (`plotly`) plotting libraries within the Streamlit dashboard to balance visual clarity, user engagement, and server performance:
+* **Plotly (Dynamic/Interactive):** Used for Scatter Plots, Histograms, and Box Plots on the Sale Price Study page. Plotly provides an interactive HTML/JS frontend, allowing the user to hover over specific data points, pan, and zoom. This strictly satisfies the requirement for "interactive visualisations" to maximize user engagement, while safely offloading graphic memory management to the client's web browser.
+* **Matplotlib & Seaborn (Static):** Used for complex statistical visualizations like the Correlation Heatmaps and Bar Plots. While Seaborn excels at rendering detailed statistical matrices, Matplotlib inherently retains figure objects in the Python global state. This creates a known risk of server memory leaks when rendering repeatedly in a Streamlit environment. To mitigate this and ensure system stability, explicit resource cleanup (`plt.close(fig)`) was rigorously implemented immediately after rendering every static plot.
+
+### 6.2 Architectural Decision: Pre-rendered ML Performance Plots
+During the transition from the Jupyter Notebook environment to the live Streamlit production dashboard, a deliberate MLOps decision was made to export the model's performance plots (Feature Importance and Regression Evaluation scatter plots) as static images (`.png`) rather than rendering them dynamically on the fly.
+* **Performance & Server Memory Optimization:** Rendering complex scatter plots with thousands of data points dynamically would require the Streamlit server to load the entire dataset, perform train/test splits, reverse logarithmic transformations, and run predictions upon every page load. This consumes significant RAM and processing power, creating a high risk of application crashes (Out of Memory errors) in lightweight or free-tier deployment environments.
+* **Reproducibility & Consistency:** By saving the visual artifacts at the exact moment of model training in the notebook, we guarantee that the dashboard displays a consistent, immutable snapshot of the model's approved performance. This follows industry MLOps best practices by strictly separating the **Research/Training** environment from the **Production/Deployment** environment.
+
+### 6.3 Architectural Decision: Streamlit Data and Asset Caching
+Streamlit's execution model runs the entire script from top to bottom upon every user interaction (e.g., clicking a button or changing a widget). 
+* **The Risk:** Reading large CSV datasets and heavy serialized Machine Learning objects (`.pkl` pipelines and scalers) from the disk on every interaction would cause severe UI lag and excessive memory consumption, leading to potential server crashes.
+* **The Solution:** We explicitly implemented Streamlit's caching decorators within the `src/data_management.py` module. We applied `@st.cache_data` to functions loading Pandas DataFrames and `@st.cache_resource` to functions loading non-mutating global ML models via `joblib`. This ensures these assets are loaded from the disk into RAM exactly once. Subsequent user interactions retrieve the data instantly from memory, achieving a highly responsive and stable production dashboard.
 
 ## 7. 🐛 Fixed Bugs & Issues
 
@@ -66,3 +81,59 @@ The following tools and libraries were utilized within the virtual environment t
 * **Bug:** During the final step of the modeling phase (`05_Modeling.ipynb`), the `RandomForestRegressor` was accidentally serialized (`.pkl`) instead of the winning `LinearRegression` model. This would result in the Streamlit dashboard using a sub-optimal model with a lower $R^2$ score (0.749 instead of 0.878) for live predictions.
 * **Fix:** I identified the mismatch between the documented winning model and the serialized variable. I corrected the output code to explicitly call `joblib.dump()` on the `lin_reg_pipe` variable and renamed the output file to `linear_regression_pipeline.pkl` to prevent deployment errors.
 
+**Issue 4: Matplotlib Memory Leak in Dashboard**
+* **Bug:** While rendering Matplotlib and Seaborn plots (such as the Correlation Bar Plot and Heatmaps) on the Sale Price Study page, the application is prone to trigger a `PyplotGlobalUseWarning`. This happens because Matplotlib keeps figure objects in the global state, leading to excessive memory consumption and eventual server instability upon multiple user interactions.
+* **Fix:** I implemented `plt.close(fig)` immediately after every `st.pyplot(fig)` call.
+* **Reasoning:** Unlike a standard Jupyter Notebook where plots are cleared after display, a Streamlit web server requires explicit resource cleanup. Closing the figure object manually ensures that memory is released back to the system after each plot is rendered, preventing leaks and maintaining high performance during user interaction.
+
+**Issue 5: Scikit-Learn Feature Order Mismatch on Custom Prediction**
+* **Bug:** When testing the "Predict Custom Property Price" tool, the ML pipeline crashed with a `ValueError` stating that the feature names must be in the exact same order as they were during the model's `fit()` phase. The dictionary creating the live Pandas DataFrame had slightly disordered keys, and Pandas' `.filter()` method does not reorder columns, it only drops unselected ones.
+* **Fix:** I reorganized the dictionary keys within the `DrawInputsWidgets()` function to strictly reflect the exact column sequence of the original dataset. Furthermore, to make the pipeline bulletproof, I replaced the `.filter(price_features)` call with explicit list indexing `df[price_features]`, which guarantees that the DataFrame columns are forcefully reordered to match the trained pipeline's expectations before prediction.
+
+## 8. Development Workflow (CRISP-DM)
+This project was developed following the **CRISP-DM** (Cross-Industry Standard Process for Data Mining) methodology:
+1. **Business Understanding:** Defining the client's needs (BR1 and BR2).
+2. **Data Understanding:** Performing initial EDA to discover patterns and formulate hypotheses.
+3. **Data Preparation:** Cleaning missing values, engineering new features (e.g., `HouseAge`), and encoding categorical variables.
+4. **Modeling:** Training various algorithms (Decision Trees, Random Forests, Linear Regression) and hyperparameter tuning.
+5. **Evaluation:** Assessing models against the success metric ($R^2 \ge 0.75$) and selecting the best performer.
+6. **Deployment:** Building an interactive Streamlit dashboard and deploying it via Heroku.
+
+## 9. Deployment
+
+### Heroku Deployment
+The project was deployed to Heroku using the following steps:
+
+1. Log in to Heroku and create a new App.
+2. Navigate to the **Deploy** tab and select **GitHub** as the deployment method.
+3. Search for the project repository (`heritage-housing-issues`) and click **Connect**.
+4. Ensure that the `requirements.txt`, `setup.sh`, and `Procfile` are present in the GitHub repository root.
+5. Ensure that the `runtime.txt` contains a Python version supported by the Heroku stack (e.g., `python-3.8.18`).
+6. At the bottom of the deploy page, select the `main` branch and click **Deploy Branch**.
+7. Once the build process completes, click **Open App** to view the live dashboard.
+
+**Live App Link:** [INSERIR O LINK DO SEU APP AQUI]
+
+### Forking the GitHub Repository
+To experiment with the code without affecting the main branch:
+1. Log in to GitHub and locate the repository.
+2. At the top right of the Repository page, click the **Fork** button.
+3. A copy of the original repository will be created in your GitHub account.
+
+### Local Clone
+To clone the repository to your local machine:
+1. Under the repository name on GitHub, click the **Code** button.
+2. Choose your preferred cloning method (HTTPS, SSH, or GitHub CLI) and copy the provided URL.
+3. Open your terminal or command prompt.
+4. Change the current working directory to the location where you want the cloned directory to be made.
+5. Type `git clone`, followed by the URL you copied in Step 2.
+   ```bash
+   git clone https://github.com/marcus-andre/heritage-housing-issues.git
+   ```
+6. Press Enter. Your local clone will be created.
+7. Install the required dependencies using: `pip install -r requirements.txt`.
+
+## 10. Credits
+* The Ames Housing dataset was sourced from Kaggle.
+* The project template and Streamlit multipage architecture were provided by Code Institute.
+* Guidance on mitigating Streamlit memory leaks with Matplotlib was sourced from standard Python/Streamlit community best practices.
