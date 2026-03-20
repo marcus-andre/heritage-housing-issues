@@ -6,7 +6,11 @@ kaggle.json
 
 # Ignore all files in inputs, except the specific dataset needed for the dashboard
 inputs/*
-!/workspaces/heritage-housing-issues/inputs/datasets/raw/house-price/
+!inputs/datasets/
+inputs/datasets/*
+!inputs/datasets/raw/
+inputs/datasets/raw/*
+!inputs/datasets/raw/house-price/
 
 # Ignore all files in outputs, except for processed datasets and trained models
 outputs/*
