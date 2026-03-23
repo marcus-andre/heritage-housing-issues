@@ -77,7 +77,7 @@ Streamlit's execution model runs the entire script from top to bottom upon every
 * **The Risk:** Reading large CSV datasets and heavy serialized Machine Learning objects (`.pkl` pipelines and scalers) from the disk on every interaction would cause severe UI lag and excessive memory consumption, leading to potential server crashes.
 * **The Solution:** We explicitly implemented Streamlit's caching decorators within the `src/data_management.py` module. We applied `@st.cache_data` to functions loading Pandas DataFrames and `@st.cache_resource` to functions loading non-mutating global ML models via `joblib`. This ensures these assets are loaded from the disk into RAM exactly once. Subsequent user interactions retrieve the data instantly from memory, achieving a highly responsive and stable production dashboard.
 
-## 7. 🐛 Fixed Bugs & Issues
+## 7. 🐛 Fixed & Unfixed Bugs
 
 **Issue 1: Feature Order Mismatch (Silent Fail Prevention)**
 * **Bug:** Machine learning models require the exact same feature order during live prediction as they had during training. If the Streamlit dashboard passes user input in a different sequence, the model will output completely incorrect predictions without throwing any visible system errors (a highly dangerous silent fail).
@@ -99,6 +99,9 @@ Streamlit's execution model runs the entire script from top to bottom upon every
 **Issue 5: Scikit-Learn Feature Order Mismatch on Custom Prediction**
 * **Bug:** When testing the "Predict Custom Property Price" tool, the ML pipeline crashed with a `ValueError` stating that the feature names must be in the exact same order as they were during the model's `fit()` phase. The dictionary creating the live Pandas DataFrame had slightly disordered keys, and Pandas' `.filter()` method does not reorder columns, it only drops unselected ones.
 * **Fix:** I reorganized the dictionary keys within the `DrawInputsWidgets()` function to strictly reflect the exact column sequence of the original dataset. Furthermore, to make the pipeline bulletproof, I replaced the `.filter(price_features)` call with explicit list indexing `df[price_features]`, which guarantees that the DataFrame columns are forcefully reordered to match the trained pipeline's expectations before prediction.
+
+**Unfixed Bugs**
+* Currently, there are no known unfixed bugs in the deployed application. All identified issues during the development lifecycle and testing phases have been successfully resolved.
 
 ## 8. Development Workflow (CRISP-DM)
 This project was developed following the **CRISP-DM** (Cross-Industry Standard Process for Data Mining) methodology:
