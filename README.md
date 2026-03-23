@@ -152,3 +152,4 @@ To clone the repository to your local machine:
 * The Ames Housing dataset was sourced from Kaggle.
 * The project template and Streamlit multipage architecture were provided by Code Institute.
 * Guidance on mitigating Streamlit memory leaks with Matplotlib was sourced from standard Python/Streamlit community best practices.
+* **AI Assistants:** Artificial Intelligence tools (such as Google Gemini) were used as coding assistants during this project. They were primarily utilized for troubleshooting bugs (e.g., resolving the Matplotlib memory leak), optimizing data manipulation syntax in pandas, and generating standard Streamlit UI boilerplate. All AI-generated code was thoroughly reviewed, modified, and integrated manually to ensure full comprehension and alignment with the project's business requirements.
