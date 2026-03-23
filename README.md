@@ -127,7 +127,7 @@ The project was deployed to Heroku using the following steps:
 6. Keep an eye on the build log to ensure there are no errors.
 7. Once the build process runs smoothly and completes, click **Open App** to view the live dashboard.
 
-**Live App Link:** [INSERIR O LINK DO SEU APP AQUI]
+**Live App Link:** [Heritage Housing Analytics Dashboard](https://heritage-housing-analytics-a36b900c1e33.herokuapp.com/)
 
 ### Forking the GitHub Repository
 To experiment with the code without affecting the main branch:
